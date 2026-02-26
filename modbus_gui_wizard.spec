@@ -15,8 +15,8 @@ import os
 import sys
 from PyInstaller.utils.hooks import collect_submodules, collect_data_files
 
-# Путь к проекту
-project_dir = os.path.dirname(os.path.abspath(__file__))
+# Путь к проекту (используем cwd для совместимости с GitHub Actions)
+project_dir = os.getcwd()
 
 # Определение платформы
 IS_WINDOWS = sys.platform.startswith('win')
