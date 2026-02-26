@@ -42,6 +42,10 @@ modbus_scanner_rust/target/
 *.pyd
 *.so
 
+# Виртуальные окружения
+.venv/
+venv/
+
 # IDE
 .idea/
 .vscode/

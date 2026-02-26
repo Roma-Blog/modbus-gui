@@ -1,5 +1,6 @@
 # GitHub Actions Workflow для сборки DVLINK GUI
-# Сборка для Windows и Linux
+# Сборка только для Windows (.exe)
+# Linux - запуск через Python (без компиляции)
 
 name: Build DVLINK GUI
 
@@ -13,92 +14,61 @@ jobs:
   build-windows:
     name: Build Windows (.exe)
     runs-on: windows-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           cache: 'pip'
-      
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-      
+
       - name: Create virtualenv
         run: |
           python -m venv .venv
 
-      - name: Install dependencies (Windows)
-        if: runner.os == 'Windows'
+      - name: Install dependencies
         run: |
           .venv\Scripts\Activate
           python -m pip install --upgrade pip
           pip install pyinstaller pyserial PyQt5 maturin
 
-      - name: Install dependencies (Linux/macOS)
-        if: runner.os != 'Windows'
-        run: |
-          source .venv/bin/activate
-          python -m pip install --upgrade pip
-          pip install pyinstaller pyserial PyQt5 maturin
-
-      - name: Build Rust module (Windows)
-        if: runner.os == 'Windows'
+      - name: Build Rust module
         run: |
           .venv\Scripts\Activate
           cd modbus_scanner_rust
           maturin develop --release
           cd ..
 
-      - name: Build Rust module (Linux/macOS)
-        if: runner.os != 'Windows'
-        run: |
-          source .venv/bin/activate
-          cd modbus_scanner_rust
-          maturin develop --release
-          cd ..
-
-      - name: Verify Rust module (Windows)
-        if: runner.os == 'Windows'
+      - name: Verify Rust module
         run: |
           .venv\Scripts\Activate
           python -c "import modbus_scanner_rust; print('Rust module OK')"
 
-      - name: Verify Rust module (Linux/macOS)
-        if: runner.os != 'Windows'
-        run: |
-          source .venv/bin/activate
-          python -c "import modbus_scanner_rust; print('Rust module OK')"
-      
-      - name: Build with PyInstaller (Windows)
-        if: runner.os == 'Windows'
+      - name: Build with PyInstaller
         run: |
           .venv\Scripts\Activate
           pyinstaller --clean modbus_gui_wizard.spec
-      
-      - name: Build with PyInstaller (Linux/macOS)
-        if: runner.os != 'Windows'
-        run: |
-          source .venv/bin/activate
-          pyinstaller --clean modbus_gui_wizard.spec
-      
+
       - name: Create release archive
         run: |
           cd dist
           Compress-Archive -Path DVLINK_GUI -DestinationPath DVLINK_GUI_Windows.zip
           cd ..
-      
+
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: DVLINK_GUI-Windows
           path: dist/DVLINK_GUI_Windows.zip
-      
+
       - name: Upload to Release (if tag)
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
@@ -106,242 +76,16 @@ jobs:
           files: dist/DVLINK_GUI_Windows.zip
           body: |
             ## DVLINK GUI для Windows
-            
+
             ### Установка
             1. Распакуйте архив
             2. Запустите `DVLINK_GUI.exe`
-            
+
             ### Требования
             - Windows 10/11
             - Python устройства (COM порты)
-            
+
             ### Известные проблемы
             - Может потребоваться Visual C++ Redistributable
-          draft: true
-          prerelease: false
-
-  build-linux:
-    name: Build Linux (AppImage)
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-      
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable
-      
-      - name: Create virtualenv
-        run: |
-          python -m venv .venv
-      
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libudev-dev \
-            libusb-1.0-0-dev \
-            libhidapi-dev \
-            libserialport-dev \
-            fuse \
-            libfuse2
-
-      - name: Install Python dependencies
-        run: |
-          source .venv/bin/activate
-          python -m pip install --upgrade pip
-          pip install pyinstaller pyserial PyQt5 maturin pyudev
-      
-      - name: Build Rust module
-        run: |
-          source .venv/bin/activate
-          cd modbus_scanner_rust
-          maturin develop --release
-          cd ..
-      
-      - name: Verify Rust module
-        run: |
-          source .venv/bin/activate
-          python -c "import modbus_scanner_rust; print('Rust module OK')"
-      
-      - name: Build with PyInstaller
-        run: |
-          source .venv/bin/activate
-          pyinstaller --clean modbus_gui_wizard.spec
-      
-      - name: Create AppImage
-        run: |
-          cd dist
-          # Создаём AppImage
-          mkdir -p DVLINK_GUI.AppDir
-          cp -r DVLINK_GUI/* DVLINK_GUI.AppDir/
-          cp ../icon.png DVLINK_GUI.AppDir/ 2>/dev/null || true
-          
-          # Создаём desktop файл
-          cat > DVLINK_GUI.AppDir/DVLINK_GUI.desktop << 'EOF'
-          [Desktop Entry]
-          Name=DVLINK GUI
-          Exec=DVLINK_GUI
-          Icon=DVLINK_GUI
-          Type=Application
-          Categories=Utility;
-          Comment=Modbus RTU Configuration Tool
-          EOF
-          
-          # Создаём AppRun
-          cat > DVLINK_GUI.AppDir/AppRun << 'EOF'
-          #!/bin/bash
-          SELF=$(readlink -f "$0")
-          HERE=${SELF%/*}
-          export PATH="${HERE}":${PATH}
-          exec "${HERE}/DVLINK_GUI" "$@"
-          EOF
-          chmod +x DVLINK_GUI.AppDir/AppRun
-          
-          # Создаём AppImage (если есть appimagetool)
-          if command -v appimagetool &> /dev/null; then
-            appimagetool DVLINK_GUI.AppDir DVLINK_GUI_Linux.AppImage
-          else
-            # Просто архивируем
-            tar -czf DVLINK_GUI_Linux.tar.gz DVLINK_GUI/
-          fi
-          cd ..
-      
-      - name: Upload Linux artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: DVLINK_GUI-Linux
-          path: dist/DVLINK_GUI_Linux.*
-      
-      - name: Upload to Release (if tag)
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: dist/DVLINK_GUI_Linux.*
-          body: |
-            ## DVLINK GUI для Linux
-            
-            ### Установка
-            1. Распакуйте архив ИЛИ используйте AppImage
-            2. Запустите `./DVLINK_GUI` или `./DVLINK_GUI_Linux.AppImage`
-            
-            ### Требования
-            - Linux (Ubuntu 20.04+, Debian 11+, Fedora 34+)
-            - Доступ к COM портам (добавьте пользователя в группу dialout)
-            
-            ### Известные проблемы
-            - Может потребоваться `sudo usermod -a -G dialout $USER`
-          draft: true
-          prerelease: false
-
-  build-macos:
-    name: Build macOS (.app)
-    runs-on: macos-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-      
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable
-      
-      - name: Create virtualenv
-        run: |
-          python -m venv .venv
-
-      - name: Install dependencies (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          .venv\Scripts\Activate
-          python -m pip install --upgrade pip
-          pip install pyinstaller pyserial PyQt5 maturin
-
-      - name: Install dependencies (Linux/macOS)
-        if: runner.os != 'Windows'
-        run: |
-          source .venv/bin/activate
-          python -m pip install --upgrade pip
-          pip install pyinstaller pyserial PyQt5 maturin
-
-      - name: Build Rust module (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          .venv\Scripts\Activate
-          cd modbus_scanner_rust
-          maturin develop --release
-          cd ..
-
-      - name: Build Rust module (Linux/macOS)
-        if: runner.os != 'Windows'
-        run: |
-          source .venv/bin/activate
-          cd modbus_scanner_rust
-          maturin develop --release
-          cd ..
-
-      - name: Verify Rust module (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          .venv\Scripts\Activate
-          python -c "import modbus_scanner_rust; print('Rust module OK')"
-
-      - name: Verify Rust module (Linux/macOS)
-        if: runner.os != 'Windows'
-        run: |
-          source .venv/bin/activate
-          python -c "import modbus_scanner_rust; print('Rust module OK')"
-      
-      - name: Build with PyInstaller
-        run: |
-          source .venv/bin/activate
-          pyinstaller --clean modbus_gui_wizard.spec
-
-      - name: Create DMG
-        run: |
-          cd dist
-          # Создаём DMG
-          hdiutil create -volname "DVLINK GUI" -srcfolder DVLINK_GUI -ov -format UDZO DVLINK_GUI_macOS.dmg
-          cd ..
-      
-      - name: Upload macOS artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: DVLINK_GUI-macOS
-          path: dist/DVLINK_GUI_macOS.dmg
-      
-      - name: Upload to Release (if tag)
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: dist/DVLINK_GUI_macOS.dmg
-          body: |
-            ## DVLINK GUI для macOS
-            
-            ### Установка
-            1. Откройте DMG файл
-            2. Перетащите DVLINK GUI в Applications
-            
-            ### Требования
-            - macOS 11.0+
-            - USB-C / USB адаптеры для COM портов
-            
-            ### Известные проблемы
-            - Может потребоваться разрешение в System Preferences > Security & Privacy
           draft: true
           prerelease: false

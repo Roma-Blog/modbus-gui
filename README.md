@@ -16,9 +16,9 @@
 
 | Платформа | Статус | COM-порты | USB-мониторинг |
 |-----------|--------|-----------|----------------|
-| **Windows** | ✅ Полная | `COM1`, `COM2`, ... | Опрос портов |
-| **Linux** | ✅ Полная | `/dev/ttyUSB0`, `/dev/ttyACM0` | pyudev (события) |
-| **macOS** | ⚠️ Частичная | `/dev/cu.*` | Опрос портов |
+| **Windows** | ✅ Готовый .exe | `COM1`, `COM2`, ... | Опрос портов |
+| **Linux** | ✅ Запуск из Python | `/dev/ttyUSB0`, `/dev/ttyACM0` | pyudev (события) |
+| **macOS** | ⚠️ Запуск из Python | `/dev/cu.*` | Опрос портов |
 
 ## Быстрый старт
 
@@ -38,7 +38,19 @@ python __main__.py
 
 ## Сборка приложения
 
-### Windows
+### Windows (.exe)
+
+**Автоматическая сборка через GitHub Actions:**
+
+```bash
+# Создайте тег версии
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Через 10-15 минут в [Releases](https://github.com/ВАШ_НИК/modbus-gui/releases) появится готовый `.exe`.
+
+**Локальная сборка (если нужно):**
 
 ```powershell
 # Установка зависимостей
@@ -58,35 +70,24 @@ pyinstaller --clean modbus_gui_wizard.spec
 
 Результат: `dist/DVLINK_GUI/DVLINK_GUI.exe`
 
-### Linux
+### Linux (запуск из Python)
+
+Сборка в .exe не требуется — запускается напрямую:
 
 ```bash
 # Установка зависимостей
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-pip install pyinstaller
 
-# Компиляция Rust-модуля
-cd modbus_scanner_rust
-maturin develop --release
-cd ..
-
-# Сборка
-pyinstaller --clean modbus_gui_wizard.spec
+# Запуск приложения
+python __main__.py
 ```
 
-### Через GitHub Actions
-
-Автоматическая сборка для Windows, Linux и macOS:
-
+**Опционально: установка pyudev для USB-мониторинга:**
 ```bash
-# Создайте тег версии
-git tag v1.0.0
-git push origin v1.0.0
+pip install pyudev
 ```
-
-Сборка запустится автоматически, артефакты появятся в [Releases](https://github.com/ВАШ_НИК/modbus-gui/releases).
 
 ## Структура проекта
 
