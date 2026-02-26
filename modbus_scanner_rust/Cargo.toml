@@ -1,0 +1,17 @@
+[package]
+name = "modbus_scanner_rust"
+version = "0.1.0"
+edition = "2021"
+description = "Fast Modbus RTU scanner using PyO3 for Python integration"
+
+[lib]
+name = "modbus_scanner_rust"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.20", features = ["extension-module"] }
+serialport = "4.3"
+
+[profile.release]
+opt-level = 3
+lto = true

@@ -1,0 +1,12 @@
+# Кроссплатформенные зависимости (Linux + Windows)
+pyserial>=3.5
+PyQt5>=5.15.0
+maturin>=1.0
+
+# Опционально: для Linux (USB мониторинг через udev)
+# Устанавливается только на Linux:
+pyudev>=0.21.0; sys_platform == 'linux'
+
+# Опционально: для Windows (USB мониторинг через pywin32)
+# Устанавливается только на Windows:
+pywin32>=305; sys_platform == 'win32'

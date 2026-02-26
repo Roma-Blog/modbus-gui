@@ -1,0 +1,11 @@
+{
+  "port": "COM5",
+  "address": 15,
+  "baudrate": "115200",
+  "can_baudrate": "500000",
+  "can_address": 1,
+  "auto_refresh": 5,
+  "max_records": 1000,
+  "timeout": 1000,
+  "poll_interval": 1000
+}

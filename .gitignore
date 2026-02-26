@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Виртуальное окружение
+.venv/
+venv/
+ENV/
+env/
+
+# Rust
+modbus_scanner_rust/target/
+*.rlib
+*.dylib
+
+# PyInstaller
+*.manifest
+*.spec.bak
+dist/
+build/
+
+# Rust артефакты (но не исходники)
+modbus_scanner_rust/target/
+*.pyd
+*.so
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Crash reports
+/var/crash/
+
+# Logs
+*.log
+
+# Тестовые файлы
+test_*.pyc
