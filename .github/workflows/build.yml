@@ -29,23 +29,62 @@ jobs:
         with:
           toolchain: stable
       
-      - name: Install dependencies
+      - name: Create virtualenv
         run: |
+          python -m venv .venv
+
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .venv\Scripts\Activate
           python -m pip install --upgrade pip
           pip install pyinstaller pyserial PyQt5 maturin
-      
-      - name: Build Rust module
+
+      - name: Install dependencies (Linux/macOS)
+        if: runner.os != 'Windows'
         run: |
+          source .venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install pyinstaller pyserial PyQt5 maturin
+
+      - name: Build Rust module (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .venv\Scripts\Activate
           cd modbus_scanner_rust
           maturin develop --release
           cd ..
-      
-      - name: Verify Rust module
+
+      - name: Build Rust module (Linux/macOS)
+        if: runner.os != 'Windows'
         run: |
+          source .venv/bin/activate
+          cd modbus_scanner_rust
+          maturin develop --release
+          cd ..
+
+      - name: Verify Rust module (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .venv\Scripts\Activate
+          python -c "import modbus_scanner_rust; print('Rust module OK')"
+
+      - name: Verify Rust module (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          source .venv/bin/activate
           python -c "import modbus_scanner_rust; print('Rust module OK')"
       
-      - name: Build with PyInstaller
+      - name: Build with PyInstaller (Windows)
+        if: runner.os == 'Windows'
         run: |
+          .venv\Scripts\Activate
+          pyinstaller --clean modbus_gui_wizard.spec
+      
+      - name: Build with PyInstaller (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          source .venv/bin/activate
           pyinstaller --clean modbus_gui_wizard.spec
       
       - name: Create release archive
@@ -100,6 +139,10 @@ jobs:
         with:
           toolchain: stable
       
+      - name: Create virtualenv
+        run: |
+          python -m venv .venv
+      
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -109,26 +152,29 @@ jobs:
             libhidapi-dev \
             libserialport-dev \
             fuse \
-            libfuse2 \
-            appimagekit
-      
+            libfuse2
+
       - name: Install Python dependencies
         run: |
+          source .venv/bin/activate
           python -m pip install --upgrade pip
           pip install pyinstaller pyserial PyQt5 maturin pyudev
       
       - name: Build Rust module
         run: |
+          source .venv/bin/activate
           cd modbus_scanner_rust
           maturin develop --release
           cd ..
       
       - name: Verify Rust module
         run: |
+          source .venv/bin/activate
           python -c "import modbus_scanner_rust; print('Rust module OK')"
       
       - name: Build with PyInstaller
         run: |
+          source .venv/bin/activate
           pyinstaller --clean modbus_gui_wizard.spec
       
       - name: Create AppImage
@@ -215,25 +261,57 @@ jobs:
         with:
           toolchain: stable
       
-      - name: Install dependencies
+      - name: Create virtualenv
         run: |
+          python -m venv .venv
+
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .venv\Scripts\Activate
           python -m pip install --upgrade pip
           pip install pyinstaller pyserial PyQt5 maturin
-      
-      - name: Build Rust module
+
+      - name: Install dependencies (Linux/macOS)
+        if: runner.os != 'Windows'
         run: |
+          source .venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install pyinstaller pyserial PyQt5 maturin
+
+      - name: Build Rust module (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .venv\Scripts\Activate
           cd modbus_scanner_rust
           maturin develop --release
           cd ..
-      
-      - name: Verify Rust module
+
+      - name: Build Rust module (Linux/macOS)
+        if: runner.os != 'Windows'
         run: |
+          source .venv/bin/activate
+          cd modbus_scanner_rust
+          maturin develop --release
+          cd ..
+
+      - name: Verify Rust module (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .venv\Scripts\Activate
+          python -c "import modbus_scanner_rust; print('Rust module OK')"
+
+      - name: Verify Rust module (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          source .venv/bin/activate
           python -c "import modbus_scanner_rust; print('Rust module OK')"
       
       - name: Build with PyInstaller
         run: |
+          source .venv/bin/activate
           pyinstaller --clean modbus_gui_wizard.spec
-      
+
       - name: Create DMG
         run: |
           cd dist
